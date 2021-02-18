@@ -587,10 +587,9 @@ class ParticipantService {
 
 	/**
 	 * @param Room $room
-	 * @param bool $loadSession Loads a random session if possible for the users
 	 * @return Participant[]
 	 */
-	public function getParticipantsForRoom(Room $room, bool $loadSession = false): array {
+	public function getParticipantsForRoom(Room $room): array {
 		$query = $this->connection->getQueryBuilder();
 
 		$helper = new SelectHelper();
@@ -598,13 +597,30 @@ class ParticipantService {
 		$query->from('talk_attendees', 'a')
 			->where($query->expr()->eq('a.room_id', $query->createNamedParameter($room->getId(), IQueryBuilder::PARAM_INT)));
 
-		if ($loadSession) {
-			$helper->selectSessionsTable($query);
-			$query->leftJoin(
+		return $this->getParticipantsFromQuery($query, $room);
+	}
+
+	/**
+	 * Get all sessions and attendees without a session for the room
+	 *
+	 * This will return multiple items for the same attendee if the attendee
+	 * has multiple sessions in the room.
+	 *
+	 * @param Room $room
+	 * @return Participant[]
+	 */
+	public function getSessionsAndParticipantsForRoom(Room $room): array {
+		$query = $this->connection->getQueryBuilder();
+
+		$helper = new SelectHelper();
+		$helper->selectAttendeesTable($query);
+		$helper->selectSessionsTable($query);
+		$query->from('talk_attendees', 'a')
+			->leftJoin(
 				'a', 'talk_sessions', 's',
 				$query->expr()->eq('s.attendee_id', 'a.id')
-			);
-		}
+			)
+			->where($query->expr()->eq('a.room_id', $query->createNamedParameter($room->getId(), IQueryBuilder::PARAM_INT)));
 
 		return $this->getParticipantsFromQuery($query, $room);
 	}
@@ -626,7 +642,7 @@ class ParticipantService {
 				$query->expr()->eq('s.attendee_id', 'a.id')
 			)
 			->where($query->expr()->eq('a.room_id', $query->createNamedParameter($room->getId(), IQueryBuilder::PARAM_INT)))
-			->andWhere($query->expr()->isNotNull('s.id'));
+			->andWhere($query->expr()->isNotNull('a.id'));
 
 		if ($maxAge > 0) {
 			$query->andWhere($query->expr()->gt('s.last_ping', $query->createNamedParameter($maxAge, IQueryBuilder::PARAM_INT)));
@@ -671,7 +687,7 @@ class ParticipantService {
 
 		$helper = new SelectHelper();
 		$helper->selectAttendeesTable($query);
-		$helper->selectSessionsTable($query);
+		$helper->selectSessionsTableMax($query);
 		$query->from('talk_attendees', 'a')
 			// Currently we only care if the user has a session at all, so we can select any: #ThisIsFine
 			->leftJoin(
@@ -679,7 +695,8 @@ class ParticipantService {
 				$query->expr()->eq('s.attendee_id', 'a.id')
 			)
 			->where($query->expr()->eq('a.room_id', $query->createNamedParameter($room->getId(), IQueryBuilder::PARAM_INT)))
-			->andWhere($query->expr()->eq('a.notification_level', $query->createNamedParameter($notificationLevel, IQueryBuilder::PARAM_INT)));
+			->andWhere($query->expr()->eq('a.notification_level', $query->createNamedParameter($notificationLevel, IQueryBuilder::PARAM_INT)))
+			->groupBy('a.id');
 
 		return $this->getParticipantsFromQuery($query, $room);
 	}
