@@ -137,6 +137,11 @@ the main body of the message as well as a quote.
 								@click.stop="handlePrivateReply">
 								{{ t('spreed', 'Reply privately') }}
 							</ActionButton>
+							<ActionButton
+								:close-after-click="true"
+								@click.stop="handleMarkAsUnread">
+								{{ t('spreed', 'Mark as unread') }}
+							</ActionButton>
 							<template
 								v-for="action in messageActions">
 								<ActionButton
@@ -659,6 +664,9 @@ export default {
 			const conversation = response.data.ocs.data
 			this.$store.dispatch('addConversation', conversation)
 			this.$router.push({ name: 'conversation', params: { token: conversation.token } }).catch(err => console.debug(`Error while pushing the new conversation's route: ${err}`))
+		},
+		handleMarkAsUnread() {
+			this.$store.dispatch('updateLastReadMessage', { token: this.token, id: this.id })
 		},
 	},
 }
