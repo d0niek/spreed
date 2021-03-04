@@ -30,6 +30,8 @@ the main body of the message as well as a quote.
 		ref="message"
 		:data-message-id="id"
 		:data-seen="seen"
+		:data-next-message-id="nextMessageId"
+		:data-previous-message-id="previousMessageId"
 		class="message">
 		<div
 			:class="{'hover': showActions && !isSystemMessage && !isDeletedMessage, 'system' : isSystemMessage}"
@@ -337,6 +339,16 @@ export default {
 		sendingFailure: {
 			type: String,
 			default: '',
+		},
+
+		previousMessageId: {
+			type: Number,
+			default: 0,
+		},
+
+		nextMessageId: {
+			type: Number,
+			default: 0,
 		},
 
 		lastReadMessageId: {
@@ -674,7 +686,7 @@ export default {
 			// update in backend
 			this.$store.dispatch('updateLastReadMessage', {
 				token: this.token,
-				id: this.id,
+				id: this.previousMessageId,
 			})
 			// update visually
 			this.$store.dispatch('setVisualLastReadMessageId', {
