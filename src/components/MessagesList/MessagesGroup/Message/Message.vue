@@ -135,7 +135,7 @@ the main body of the message as well as a quote.
 							{{ t('spreed', 'Reply privately') }}
 						</ActionButton>
 						<ActionButton
-							v-if="!isSystemMessage"
+							v-if="isReplyable"
 							icon="icon-external"
 							:close-after-click="true"
 							@click.stop.prevent="handleCopyMessageLink">
