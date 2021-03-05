@@ -61,7 +61,7 @@ class SessionMapper extends QBMapper {
 		$query = $this->db->getQueryBuilder();
 		$query->select('*')
 			->from($this->getTableName())
-			->where($query->expr()->eq('attendeeId', $query->createNamedParameter($attendeeId)));
+			->where($query->expr()->eq('attendee_id', $query->createNamedParameter($attendeeId)));
 
 		return $this->findEntities($query);
 	}
